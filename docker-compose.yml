@@ -1,36 +1,57 @@
 version: '3'
 
 services:
-  db:
+  prod-concourse-db:
     image: postgres
     environment:
       POSTGRES_DB: concourse
       POSTGRES_USER: concourse_user
       POSTGRES_PASSWORD: concourse_pass
+      PGDATA: /database
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
 
-  web:
+  prod-concourse-web:
     image: concourse/concourse
     command: web
-    links: [db]
-    depends_on: [db]
+    links: [prod-concourse-db]
+    depends_on: [prod-concourse-db]
     ports: ["8080:8080"]
-    volumes: ["./keys/web:/concourse-keys"]
+    volumes:
+      - "./keys/web:/concourse-keys"
     environment:
       CONCOURSE_EXTERNAL_URL: http://localhost:8080
-      CONCOURSE_POSTGRES_HOST: db
+      CONCOURSE_POSTGRES_HOST: prod-concourse-db
       CONCOURSE_POSTGRES_USER: concourse_user
       CONCOURSE_POSTGRES_PASSWORD: concourse_pass
       CONCOURSE_POSTGRES_DATABASE: concourse
       CONCOURSE_ADD_LOCAL_USER: test:test
       CONCOURSE_MAIN_TEAM_LOCAL_USER: test
+      CONCOURSE_DEFAULT_BUILD_LOGS_TO_RETAIN: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
 
-  worker:
+  prod-concourse-worker:
     image: concourse/concourse
     command: worker
     privileged: true
-    depends_on: [web]
-    volumes: ["./keys/worker:/concourse-keys"]
-    links: [web]
+    depends_on: [prod-concourse-web]
+    volumes:
+      - "./keys/worker:/concourse-keys"
+#      - "./ssh:/root/.ssh"
+#      - "$HOME/.aws:/root/.aws"
+    links: [prod-concourse-web]
     stop_signal: SIGUSR2
     environment:
-      CONCOURSE_TSA_HOST: web:2222
+      CONCOURSE_TSA_HOST: prod-concourse-web:2222
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
