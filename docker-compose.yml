@@ -44,8 +44,6 @@ services:
     depends_on: [prod-concourse-web]
     volumes:
       - "./keys/worker:/concourse-keys"
-#      - "./ssh:/root/.ssh"
-#      - "$HOME/.aws:/root/.aws"
     links: [prod-concourse-web]
     stop_signal: SIGUSR2
     environment:
