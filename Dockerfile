@@ -32,7 +32,8 @@ RUN apt update && apt install -y \
     ca-certificates \
     dumb-init \
     iproute2 \
-    file
+    file \
+    curl
 
 COPY --from=assets /usr/local/concourse /usr/local/concourse
 
